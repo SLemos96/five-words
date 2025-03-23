@@ -1,10 +1,189 @@
-import { Component } from '@angular/core';
+import {AfterViewInit, Component, ElementRef, NgZone, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
+import {HttpClient} from "@angular/common/http";
+import {Word} from "./model/Word";
+import {HammerGestureConfig} from "@angular/platform-browser";
+import {GestureController, Gesture, IonCard, Platform} from "@ionic/angular";
+import {environment} from "../environments/environment";
+import {catchError, concatMap, forkJoin, of} from "rxjs";
+import {WordService} from "./service/word.service";
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-  title = 'five-words';
+export class AppComponent implements OnInit, AfterViewInit {
+  words: Word[] = [];
+  selectedWord?: Word;
+  isLoading = true;
+  @ViewChildren(IonCard, {read: ElementRef}) cards!: QueryList<ElementRef>;
+  @ViewChild('container', { static: false }) card!: ElementRef;
+  @ViewChild('page', { static: false }) page!: ElementRef;
+
+  constructor(private http: HttpClient,
+              private gestureCtrl: GestureController,
+              private plt: Platform,
+              private zone: NgZone,
+              private wordService: WordService) {}
+
+  ngOnInit() {
+    console.log(environment.apiKey);
+    this.fetchWords();
+  }
+
+  fetchWords() {
+    this.http.get<any>(`https://api.wordnik.com/v4/words.json/randomWords?hasDictionaryDef=true&excludePartOfSpeech=family-name%2Carticle%2Cdefinite-article&maxCorpusCount=-1&minDictionaryCount=10&maxDictionaryCount=-1&minLength=5&maxLength=-1&limit=5&api_key=${environment.apiKey}`)
+      .subscribe(
+        response => {
+          console.log(response);
+          let requestArray = response.map((word: any) =>
+            this.http.get<any>(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.word}`).pipe(
+              catchError(err => {
+                console.error(`Erro na requisição ${word.word}: `, err);
+                // Retorna um valor default (pode ser null ou um objeto vazio)
+                return of([]);
+              }))
+          );
+          forkJoin(requestArray).subscribe({
+            next: (results) => {
+              // @ts-ignore
+              results.forEach(resultado => {
+                console.log(resultado);
+                if(resultado.length>0)
+                  this.words.push(resultado[0]);
+              });
+              this.isLoading = false;
+            },
+            error: (err) => {
+              console.error('Erro ao fazer as requisições:', err);
+            }
+          });
+        },
+        error => console.error('Erro ao buscar palavras:', error)
+      );
+    // this.fetchWordDetails('Quixotic');
+    // this.fetchWordDetails('Serendipity');
+    // this.fetchWordDetails('Ephemeral');
+    // this.fetchWordDetails('Monologue');
+    // this.fetchWordDetails('Luminous');
+
+  }
+
+  fetchWordDetails(word: string) {
+    this.http.get<any>(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+      .subscribe(
+        response => {
+          word = response[0];
+          this.words.push(response[0]);
+          console.log(word)
+        },
+        error => console.error('Erro ao buscar detalhes da palavra:', error)
+      );
+  }
+
+  markAsLearned(word: any) {
+    console.log(`Aprendeu: ${word.word}`);
+  }
+
+  markAsNotLearned(word: any) {
+    console.log(`Ainda não aprendeu: ${word.word}`);
+    setTimeout(() => {
+      this.words.unshift(word);
+      setTimeout(() => {
+        this.useSwipe(this.cards?.toArray());
+      }, 10);
+    }, 0);
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      const cardArray = this.cards?.toArray();
+      this.useSwipe(cardArray);
+    }, 1000);
+
+  }
+
+  useSwipe(cardArray: any){
+    for (let i = 0; i < cardArray.length; i++){
+      const card = cardArray[i];
+      console.log(`card: ${card}`);
+      const gesture: Gesture = this.gestureCtrl.create({
+        el: card.nativeElement,
+        gestureName: 'swipe',
+        onStart: ev => {
+        },
+        onMove:ev => {
+          card.nativeElement.style.transform = `translateX(${ev.deltaX}px) rotate(${ev.deltaX/10}deg)`;
+          this.RGBProcess(ev.deltaX);
+
+        },
+        onEnd: ev => {
+          card.nativeElement.style.transition = '.5s ease-out';
+          if (ev.deltaX > 150) {
+            card.nativeElement.style.transform = `translateX(${+this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
+            this.zone.run(() =>{
+              this.markAsLearned(this.words.pop());
+            })
+          } else if(ev.deltaX < -150){
+            card.nativeElement.style.transform = `translateX(${-this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
+            this.zone.run(() => {
+              this.markAsNotLearned(this.words.pop());
+            });
+          } else {
+            card.nativeElement.style.transform = '';
+          }
+          this.RGBProcess(0);
+        }
+      });
+      gesture.enable(true);
+    };
+  }
+
+  openModal(word: any){
+    this.selectedWord = word;
+  }
+
+  closeModal(){
+    this.selectedWord = undefined;
+    setTimeout(() => {
+      const cardArray = this.cards?.toArray();
+      this.useSwipe(cardArray);
+    }, 100);
+  }
+
+  swipeCard(direction: 'left' | 'right') {
+    const cardsArray = this.cards.toArray();
+    if (cardsArray.length === 0) return;
+
+    const topCard = cardsArray[cardsArray.length - 1].nativeElement;
+    const moveX = direction === 'left' ? '-100%' : '100%';
+
+    topCard.style.transition = 'transform 0.3s ease-out';
+    topCard.style.transform = `translateX(${moveX}) rotate(${direction === 'left' ? '-20' : '20'}deg)`;
+    this.RGBProcess(direction === "left" ? -20 : 20);
+
+
+    setTimeout(() => {
+      if (direction === 'left'){
+        this.markAsNotLearned(this.words.pop());
+      } else{
+        this.markAsLearned(this.words.pop());
+      }
+      this.RGBProcess(0);
+    }, 300);
+  }
+
+  playAudio(url?: string) {
+    if (url?.length){
+      const audio = new Audio(url);
+      audio.play();
+    }
+  }
+
+
+  RGBProcess(deltaX: number) {
+    let percentage = Math.min(Math.abs(deltaX), 1);
+    this.card.nativeElement.style.boxShadow = `0px 0px 10px 5px rgba(${deltaX < 0 ? 255 : 0}, ${deltaX > 0 ? 255 : 0}, 0, ${percentage})` ;
+    this.page.nativeElement.style.backgroundImage = `linear-gradient(white, rgba(${deltaX < 0 ? 255 : 0}, ${deltaX > 0 ? 255 : 0}, 0, ${percentage/4}))`;
+  }
 }

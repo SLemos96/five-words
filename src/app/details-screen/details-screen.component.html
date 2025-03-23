@@ -1,0 +1,11 @@
+<!--<p>details-screen works!</p>-->
+<div class="details-screen">
+  <button class="close-btn" (click)="closeModal()">X</button>
+  <h2 class="word-title">{{word.word}}</h2>
+  <p *ngFor="let meaning of word.meanings">
+    <strong>Part of Speech:</strong> {{meaning.partOfSpeech}}<br>
+    <ng-container *ngFor="let definiton of meaning.definitions">
+      <strong>Definition:</strong> {{definiton.definition}} <br>
+    </ng-container>
+  </p>
+</div>
