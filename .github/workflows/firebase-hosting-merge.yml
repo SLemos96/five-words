@@ -9,6 +9,7 @@ name: Deploy to Firebase Hosting on merge
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js 16.14
@@ -19,12 +20,12 @@ jobs:
         run: npm install --force
       - name: Injetando chaves API
         env:
-          api_key: ${{ secrets.APIKEY }}
-          deepl_api_key: ${{ secrets.DEEPLAPIKEY }}
+          api_key: ${{ secrets.API_KEY }}
+          deepl_api_key: ${{ secrets.DEEPL_API_KEY }}
         run: |
           echo 'Setando as chaves'
-          sed -i 's|{{APIKEY}}|${{ env.api_key }}|g' src/environments/environment.prod.ts
-          sed -i 's|{{DEEPLAPIKEY}}|${{ env.deepl_api_key }}|g' src/environments/environment.prod.ts
+          sed -i 's|{{APIKEY}}|${{ secrets.API_KEY }}|g' src/environments/environment.prod.ts
+          sed -i 's|{{DEEPLAPIKEY}}|${{ secrets.DEEPL_API_KEY }}|g' src/environments/environment.prod.ts
       - name: Build Angular project
         run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
