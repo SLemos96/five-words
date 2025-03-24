@@ -22,9 +22,8 @@ jobs:
           APIKEY: ${{ secrets.APIKEY }}
           DEEPLAPIKEY: ${{ secrets.DEEPLAPIKEY }}
         run: |
-          sed -i 's/{{APIKEY}}/"$APIKEY"/g' src/environments/environment.prod.ts
-          sed -i 's/{{DEEPLAPIKEY}}/"$DEEPLAPIKEY"/g' src/environments/environment.prod.ts
-          echo: '"$DEEPLAPIKEY" and "$APIKEY"'
+          sed -i 's|{{APIKEY}}|'"$APIKEY"'|g' src/environments/environment.prod.ts
+          sed -i 's|{{DEEPLAPIKEY}}|'"$DEEPLAPIKEY"'|g' src/environments/environment.prod.ts
       - name: Build Angular project
         run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
