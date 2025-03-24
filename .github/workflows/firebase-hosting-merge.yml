@@ -18,9 +18,13 @@ jobs:
       - name: Install dependencies
         run: npm install --force
       - name: Injetando chaves API
+        env:
+          api_key: ${{ secrets.APIKEY }}
+          deepl_api_key: ${{ secrets.DEEPLAPIKEY }}
         run: |
-          sed -i 's|{{APIKEY}}|${{ secrets.APIKEY }}|g' src/environments/environment.prod.ts
-          sed -i 's|{{DEEPLAPIKEY}}|${{ secrets.DEEPLAPIKEY }}|g' src/environments/environment.prod.ts
+          echo 'Setando as chaves'
+          sed -i 's|{{APIKEY}}|${{ env.api_key }}|g' src/environments/environment.prod.ts
+          sed -i 's|{{DEEPLAPIKEY}}|${{ env.deepl_api_key }}|g' src/environments/environment.prod.ts
       - name: Build Angular project
         run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
