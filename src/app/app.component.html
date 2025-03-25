@@ -12,10 +12,23 @@
       <div class="card-final">
         <p>Você chegou ao fim das palavras de hoje, volte amanhã!</p>
       </div>
+      <ion-card class="card info-card" #infoCard *ngIf="showInfoCard" (click)="openDetailsModal()">
+        <ion-card-header>
+          <ion-card-title class="word-title">Discover Five Words!</ion-card-title>
+        </ion-card-header>
+        <ion-card-content class="conteudo-detalhes">
+          <p>Five Words is an educational app that teaches 5 new English words every day...</p>
+          <p>Click to learn more!</p>
+        </ion-card-content>
+      </ion-card>
     </div>
     <div class="buttons-container">
-      <button class="btn dislike" (click)="swipeCard('left')">❌</button>
-      <button class="btn like" (click)="swipeCard('right')">❤️</button>
+      <button class="btn dislike" (click)="swipeCard('left')">
+        <mat-icon>close</mat-icon>
+      </button>
+      <button class="btn like" (click)="swipeCard('right')">
+        <mat-icon>favorite</mat-icon>
+      </button>
     </div>
   </div>
 </div>
@@ -44,4 +57,42 @@
       <span *ngIf="i === meaning.synonyms.length - 1">.<br></span>
     </ng-container>
   </p>
+</div>
+
+<div class="details-screen" *ngIf="detailsModal">
+  <button class="close-btn" (click)="closeDetailsModal()">X</button>
+  <div style="width: 80%;align-self: center;">
+    <h2 class="word-title" style="font-size: 28px;padding-top: 50px;padding-bottom: 30px">Discover Five Words</h2>
+    <p class="bloco-conteudo texto-detalhes">
+      Five Words is the perfect app for anyone looking to expand their English vocabulary in a fun and effective way.
+      With flashcards inspired by swipe-based apps, swipe right to mark the words you've learned and left for those that
+      need more practice. With new words available every day, you'll never run out of content to learn.
+    </p>
+<!--    <p class="bloco-conteudo">-->
+      <h3 style="font-size: 22px; padding-bottom: 10px">How to use it?</h3>
+<!--    </p>-->
+    <ul>
+      <li>Open the app and start swiping through the flashcards.</li>
+      <li>Swipe right if you've learned the word.</li>
+      <li>Swipe left to review it later.</li>
+      <li>Come back daily to discover new words!</li>
+    </ul>
+
+    <div class="features">
+      <h4>Features:</h4>
+      <ul>
+        <li><strong>5 words a day:</strong> Our curation selects the most useful and relevant words.</li>
+        <li><strong>Example sentences:</strong> See how the words are used in everyday context.</li>
+        <li><strong>Pronunciation:</strong> Listen to the correct pronunciation of words whenever possible.</li>
+        <li><strong>Easy review:</strong> If you haven't learned a word, just swipe left and revisit it later.</li>
+        <li><strong>Simple and efficient:</strong> Focused on a mobile-first experience, perfect for quick learning.</li>
+      </ul>
+    </div>
+
+    <h3>Why use Five Words?</h3>
+    <p class="bloco-conteudo texto-detalhes">With Five Words,you have complete control over your learning pace.
+      The platform is flexible and adaptable to your needs, allowing you to learn in a relaxed and progressive way.
+      Whether you're a beginner or already have some knowledge of the language, the app will help you expand your
+      vocabulary effectively and without pressure.</p>
+  </div>
 </div>

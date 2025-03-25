@@ -8,6 +8,7 @@ import {HttpClientModule} from "@angular/common/http";
 import {IonicModule} from "@ionic/angular";
 import { DetailsScreenComponent } from './details-screen/details-screen.component';
 import { LoadingComponent } from './loading/loading.component';
+import {MatIconModule} from "@angular/material/icon";
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { LoadingComponent } from './loading/loading.component';
     AppRoutingModule,
     HttpClientModule,
     IonicModule,
+    MatIconModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

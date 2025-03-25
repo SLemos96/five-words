@@ -17,6 +17,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   words: Word[] = [];
   selectedWord?: Word;
   isLoading = true;
+  showInfoCard = true;
+  detailsModal = false;
   @ViewChildren(IonCard, {read: ElementRef}) cards!: QueryList<ElementRef>;
   @ViewChild('container', { static: false }) card!: ElementRef;
   @ViewChild('page', { static: false }) page!: ElementRef;
@@ -29,14 +31,23 @@ export class AppComponent implements OnInit, AfterViewInit {
               private cryptoService: CryptoService) {}
 
   ngOnInit() {
+    const showInfoCardStorage = localStorage.getItem('showInfoCard');
+    if (showInfoCardStorage === null)
+      localStorage.setItem('showInfoCard', 'true');
+    else
+      this.showInfoCard = JSON.parse(showInfoCardStorage);
     this.initWords();
   }
 
   initWords(){
     const today = new Date();
     const lsDate = localStorage.getItem('tdate');
-
+    const showInfoCardStorage = localStorage.getItem('showInfoCard');
     // if (false){
+    if (lsDate !== null && !showInfoCardStorage){
+      this.showInfoCard = false;
+      localStorage.setItem('showInfoCard', 'false');
+    }
     if (lsDate !== null && this.isDatasIguais(today, new Date(lsDate))){
       this.words = JSON.parse(this.cryptoService.decrypt(localStorage.getItem('words')));
       this.isLoading = false;
@@ -55,7 +66,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   fetchWords() {
-    this.http.get<any>(`https://api.wordnik.com/v4/words.json/randomWords?hasDictionaryDef=true&excludePartOfSpeech=family-name%2Carticle%2Cdefinite-article&maxCorpusCount=-1&minDictionaryCount=10&maxDictionaryCount=-1&minLength=5&maxLength=-1&limit=5&api_key=${environment.apiKey}`)
+    this.http.get<any>(`https://api.wordnik.com/v4/words.json/randomWords?hasDictionaryDef=true&excludePartOfSpeech=family-name%2Carticle%2Cdefinite-article&maxCorpusCount=-1&minDictionaryCount=10&maxDictionaryCount=-1&minLength=5&maxLength=-1&limit=8&api_key=${environment.apiKey}`)
       .subscribe(
         response => {
           let requestArray = response.map((word: any) =>
@@ -69,13 +80,13 @@ export class AppComponent implements OnInit, AfterViewInit {
           forkJoin(requestArray).subscribe({
             next: (results) => {
               // @ts-ignore
-              results.forEach(resultado => {
+              results.some(resultado => {
                 if(resultado.length>0)
                   this.words.push(resultado[0]);
+                if (this.words.length === 5) return true; //parando quando o número de palavras foi alcançado
               });
               this.isLoading = false;
               localStorage.setItem('words',this.cryptoService.encrytp(this.words));
-              console.log(this.cryptoService.decrypt(localStorage.getItem('words')));
             },
             error: (err) => {
               console.error('Erro ao fazer as requisições:', err);
@@ -134,18 +145,32 @@ export class AppComponent implements OnInit, AfterViewInit {
         },
         onEnd: ev => {
           card.nativeElement.style.transition = '.5s ease-out';
-          if (ev.deltaX > 150) {
-            card.nativeElement.style.transform = `translateX(${+this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
-            this.zone.run(() =>{
-              this.markAsLearned(this.words.pop());
-            })
-          } else if(ev.deltaX < -150){
-            card.nativeElement.style.transform = `translateX(${-this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
-            this.zone.run(() => {
-              this.markAsNotLearned(this.words.pop());
-            });
+          if (card.nativeElement.classList.contains('info-card')){
+            if (ev.deltaX > 150) {
+              card.nativeElement.style.transform = `translateX(${+this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
+              this.showInfoCard = false;
+              localStorage.setItem('showInfoCard', 'false');
+            } else if(ev.deltaX < -150){
+              card.nativeElement.style.transform = `translateX(${-this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
+              this.showInfoCard = false;
+              localStorage.setItem('showInfoCard', 'false');
+            } else {
+              card.nativeElement.style.transform = '';
+            }
           } else {
-            card.nativeElement.style.transform = '';
+            if (ev.deltaX > 150) {
+              card.nativeElement.style.transform = `translateX(${+this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
+              this.zone.run(() =>{
+                this.markAsLearned(this.words.pop());
+              })
+            } else if(ev.deltaX < -150){
+              card.nativeElement.style.transform = `translateX(${-this.plt.width() * 2}px) rotate(${ev.deltaX/2}deg)`;
+              this.zone.run(() => {
+                this.markAsNotLearned(this.words.pop());
+              });
+            } else {
+              card.nativeElement.style.transform = '';
+            }
           }
           this.RGBProcess(0);
         }
@@ -166,6 +191,14 @@ export class AppComponent implements OnInit, AfterViewInit {
     }, 100);
   }
 
+  openDetailsModal(){
+    this.detailsModal = true;
+  }
+
+  closeDetailsModal(){
+    this.detailsModal = false;
+  }
+
   swipeCard(direction: 'left' | 'right') {
     const cardsArray = this.cards.toArray();
     if (cardsArray.length === 0) return;
@@ -177,15 +210,23 @@ export class AppComponent implements OnInit, AfterViewInit {
     topCard.style.transform = `translateX(${moveX}) rotate(${direction === 'left' ? '-20' : '20'}deg)`;
     this.RGBProcess(direction === "left" ? -20 : 20);
 
-
-    setTimeout(() => {
-      if (direction === 'left'){
-        this.markAsNotLearned(this.words.pop());
-      } else{
-        this.markAsLearned(this.words.pop());
-      }
-      this.RGBProcess(0);
-    }, 300);
+    if (topCard.classList.contains('info-card')){
+      console.log("info card pelo botão");
+      setTimeout(() => {
+        this.showInfoCard = false;
+        localStorage.setItem('showInfoCard', 'false');
+        this.RGBProcess(0);
+      }, 300);
+    } else {
+      setTimeout(() => {
+        if (direction === 'left'){
+          this.markAsNotLearned(this.words.pop());
+        } else{
+          this.markAsLearned(this.words.pop());
+        }
+        this.RGBProcess(0);
+      }, 300);
+    }
   }
 
   playAudio(url?: string) {
