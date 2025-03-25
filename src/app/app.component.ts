@@ -6,6 +6,7 @@ import {GestureController, Gesture, IonCard, Platform} from "@ionic/angular";
 import {environment} from "../environments/environment";
 import {catchError, concatMap, forkJoin, of} from "rxjs";
 import {WordService} from "./service/word.service";
+import {CryptoService} from "./service/crypto.service";
 
 @Component({
   selector: 'app-root',
@@ -24,18 +25,39 @@ export class AppComponent implements OnInit, AfterViewInit {
               private gestureCtrl: GestureController,
               private plt: Platform,
               private zone: NgZone,
-              private wordService: WordService) {}
+              private wordService: WordService,
+              private cryptoService: CryptoService) {}
 
   ngOnInit() {
-    console.log(environment.apiKey);
-    this.fetchWords();
+    this.initWords();
+  }
+
+  initWords(){
+    const today = new Date();
+    const lsDate = localStorage.getItem('tdate');
+
+    // if (false){
+    if (lsDate !== null && this.isDatasIguais(today, new Date(lsDate))){
+      this.words = JSON.parse(this.cryptoService.decrypt(localStorage.getItem('words')));
+      this.isLoading = false;
+    } else {
+      this.fetchWords();
+      localStorage.setItem('tdate', today.toString());
+    }
+  }
+
+  isDatasIguais(date1: Date, date2: Date){
+    if (date1.getFullYear() == date2.getFullYear()
+      && date1.getMonth() == date2.getMonth()
+      && date1.getDay() == date2.getDay())
+      return true;
+    return false;
   }
 
   fetchWords() {
     this.http.get<any>(`https://api.wordnik.com/v4/words.json/randomWords?hasDictionaryDef=true&excludePartOfSpeech=family-name%2Carticle%2Cdefinite-article&maxCorpusCount=-1&minDictionaryCount=10&maxDictionaryCount=-1&minLength=5&maxLength=-1&limit=5&api_key=${environment.apiKey}`)
       .subscribe(
         response => {
-          console.log(response);
           let requestArray = response.map((word: any) =>
             this.http.get<any>(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.word}`).pipe(
               catchError(err => {
@@ -48,11 +70,12 @@ export class AppComponent implements OnInit, AfterViewInit {
             next: (results) => {
               // @ts-ignore
               results.forEach(resultado => {
-                console.log(resultado);
                 if(resultado.length>0)
                   this.words.push(resultado[0]);
               });
               this.isLoading = false;
+              localStorage.setItem('words',this.cryptoService.encrytp(this.words));
+              console.log(this.cryptoService.decrypt(localStorage.getItem('words')));
             },
             error: (err) => {
               console.error('Erro ao fazer as requisições:', err);
@@ -61,11 +84,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         },
         error => console.error('Erro ao buscar palavras:', error)
       );
-    // this.fetchWordDetails('Quixotic');
-    // this.fetchWordDetails('Serendipity');
-    // this.fetchWordDetails('Ephemeral');
-    // this.fetchWordDetails('Monologue');
-    // this.fetchWordDetails('Luminous');
 
   }
 
@@ -75,18 +93,16 @@ export class AppComponent implements OnInit, AfterViewInit {
         response => {
           word = response[0];
           this.words.push(response[0]);
-          console.log(word)
         },
         error => console.error('Erro ao buscar detalhes da palavra:', error)
       );
   }
 
   markAsLearned(word: any) {
-    console.log(`Aprendeu: ${word.word}`);
+    localStorage.setItem('words',this.cryptoService.encrytp(this.words));
   }
 
   markAsNotLearned(word: any) {
-    console.log(`Ainda não aprendeu: ${word.word}`);
     setTimeout(() => {
       this.words.unshift(word);
       setTimeout(() => {
@@ -106,7 +122,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   useSwipe(cardArray: any){
     for (let i = 0; i < cardArray.length; i++){
       const card = cardArray[i];
-      console.log(`card: ${card}`);
       const gesture: Gesture = this.gestureCtrl.create({
         el: card.nativeElement,
         gestureName: 'swipe',
