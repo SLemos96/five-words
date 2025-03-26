@@ -126,7 +126,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       const cardArray = this.cards?.toArray();
       this.useSwipe(cardArray);
-    }, 2000);
+    }, 4000);
 
   }
 
