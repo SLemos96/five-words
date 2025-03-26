@@ -83,9 +83,10 @@ export class AppComponent implements OnInit, AfterViewInit {
               results.some(resultado => {
                 if(resultado.length>0)
                   this.words.push(resultado[0]);
-                if (this.words.length === 5) return true; //parando quando o número de palavras foi alcançado
+                if (this.words.length === 5) return true;
               });
               this.isLoading = false;
+              this.applyGestures(100);
               localStorage.setItem('words',this.cryptoService.encrytp(this.words));
             },
             error: (err) => {
@@ -123,11 +124,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.applyGestures();
+  }
+
+  applyGestures(ms: any = 100){
     setTimeout(() => {
       const cardArray = this.cards?.toArray();
       this.useSwipe(cardArray);
     }, 4000);
-
   }
 
   useSwipe(cardArray: any){
