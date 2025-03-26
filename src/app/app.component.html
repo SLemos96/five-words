@@ -1,5 +1,5 @@
 <div #page class="app-container">
-  <h1 class="logo">Five Words</h1>
+  <img class="logo-img" src="assets/five-words-black.png">
 
   <app-loading *ngIf="isLoading"></app-loading>
   <div #container class="cards-container" *ngIf="!selectedWord && !isLoading">
@@ -33,10 +33,6 @@
   </div>
 </div>
 
-<!--<app-details-screen *ngIf="selectedWord"-->
-<!--                    [word]="selectedWord"-->
-<!--                    [closeModal]="closeModal"></app-details-screen>-->
-
 <div class="details-screen" *ngIf="selectedWord">
   <button class="close-btn" (click)="closeModal()">X</button>
   <h2 class="word-title">{{selectedWord.word}}</h2>
@@ -68,9 +64,7 @@
       With flashcards inspired by swipe-based apps, swipe right to mark the words you've learned and left for those that
       need more practice. With new words available every day, you'll never run out of content to learn.
     </p>
-<!--    <p class="bloco-conteudo">-->
       <h3 style="font-size: 22px; padding-bottom: 10px">How to use it?</h3>
-<!--    </p>-->
     <ul>
       <li>Open the app and start swiping through the flashcards.</li>
       <li>Swipe right if you've learned the word.</li>

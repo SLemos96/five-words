@@ -215,7 +215,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.RGBProcess(direction === "left" ? -20 : 20);
 
     if (topCard.classList.contains('info-card')){
-      console.log("info card pelo botão");
       setTimeout(() => {
         this.showInfoCard = false;
         localStorage.setItem('showInfoCard', 'false');
