@@ -19,6 +19,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   isLoading = true;
   showInfoCard = true;
   detailsModal = false;
+  wordsSwiped = 0;
+  dayStreak = 0;
   @ViewChildren(IonCard, {read: ElementRef}) cards!: QueryList<ElementRef>;
   @ViewChild('container', { static: false }) card!: ElementRef;
   @ViewChild('page', { static: false }) page!: ElementRef;
@@ -36,25 +38,60 @@ export class AppComponent implements OnInit, AfterViewInit {
       localStorage.setItem('showInfoCard', 'true');
     else
       this.showInfoCard = JSON.parse(showInfoCardStorage);
+    this.handleStoragedData();
     this.initWords();
+  }
+
+  handleStoragedData(){
+    const wordsSwipedStorage = localStorage.getItem('wordsSwiped');
+    if (wordsSwipedStorage !== null)
+      this.wordsSwiped = JSON.parse(wordsSwipedStorage);
+
+    const dayStreakStorage = localStorage.getItem('dayStreak');
+    if (dayStreakStorage !== null)
+      this.dayStreak = JSON.parse(dayStreakStorage);
   }
 
   initWords(){
     const today = new Date();
-    const lsDate = localStorage.getItem('tdate');
+    const dataUltimoAcesso = localStorage.getItem('tdate');
     const showInfoCardStorage = localStorage.getItem('showInfoCard');
     // if (false){
-    if (lsDate !== null && !showInfoCardStorage){
+    if (dataUltimoAcesso !== null && !showInfoCardStorage){
       this.showInfoCard = false;
       localStorage.setItem('showInfoCard', 'false');
     }
-    if (lsDate !== null && this.isDatasIguais(today, new Date(lsDate))){
+    if (dataUltimoAcesso !== null && this.isDatasIguais(today, new Date(dataUltimoAcesso))){
       this.words = JSON.parse(this.cryptoService.decrypt(localStorage.getItem('words')));
       this.isLoading = false;
     } else {
       this.fetchWords();
+      this.atualizarStreakDeAcesso(today, dataUltimoAcesso);
       localStorage.setItem('tdate', today.toString());
     }
+  }
+
+  atualizarStreakDeAcesso(today: Date, dataUltimoAcesso: string | null){
+    if (dataUltimoAcesso === null){
+      this.dayStreak = 1;
+      this.setDayStreakOnLocalStorage(this.dayStreak.toString());
+      return;
+    }
+
+    let dataAcessoAnterior = new Date(dataUltimoAcesso);
+    dataAcessoAnterior.setDate(dataAcessoAnterior.getDate()+1);
+
+    if(this.isDatasIguais(today, dataAcessoAnterior)){
+        this.dayStreak +=1;
+    } else {
+      this.dayStreak = 1;
+    }
+
+    this.setDayStreakOnLocalStorage(this.dayStreak.toString());
+  }
+
+  setDayStreakOnLocalStorage(dayStreak: string){
+    localStorage.setItem('dayStreak', dayStreak);
   }
 
   isDatasIguais(date1: Date, date2: Date){
@@ -112,6 +149,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   markAsLearned(word: any) {
     localStorage.setItem('words',this.cryptoService.encrytp(this.words));
+    this.wordsSwiped +=1;
+    localStorage.setItem('wordsSwiped',this.wordsSwiped.toString());
   }
 
   markAsNotLearned(word: any) {
