@@ -7,6 +7,9 @@
       "hosting": {
         "dev": [
           "five-words-dev"
+        ],
+        "prod": [
+          "five-words-5w"
         ]
       }
     }
