@@ -9,7 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: npm ci && npm run build
+      - name: Use Node.js 16.14
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.14'
+      - name: Install dependencies
+        run: npm install --force
+      - name: Injetando chaves API
+        env:
+          api_key: ${{ secrets.API_KEY }}
+          deepl_api_key: ${{ secrets.DEEPL_API_KEY }}
+        run: |
+          echo 'Setando as chaves'
+          sed -i 's|{{APIKEY}}|${{ secrets.API_KEY }}|g' src/environments/environment.prod.ts
+          sed -i 's|{{DEEPLAPIKEY}}|${{ secrets.DEEPL_API_KEY }}|g' src/environments/environment.prod.ts
+      - name: Build Angular project
+        run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
