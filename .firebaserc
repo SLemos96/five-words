@@ -1,18 +1,5 @@
 {
   "projects": {
     "default": "five-words-5w"
-  },
-  "targets": {
-    "five-words-5w": {
-      "hosting": {
-        "dev": [
-          "five-words-dev"
-        ],
-        "prod": [
-          "five-words-5w"
-        ]
-      }
-    }
-  },
-  "etags": {}
+  }
 }

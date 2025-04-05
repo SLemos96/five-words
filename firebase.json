@@ -1,17 +1,16 @@
 {
-  "hosting": [
-    {
-      "target": "prod",
-      "site": "five-words-5w",
-      "public": "dist/five-words",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{"source": "**", "destination": "/index.html"}]
-    },
-    {
-      "target": "dev",
-      "site": "five-words-dev",
-      "public": "dist/five-words",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "rewrites": [{ "source": "**", "destination": "/index.html" }]
-    }]
+  "hosting": {
+    "public": "dist/five-words",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }
